@@ -9,9 +9,9 @@
 # First parmater as name
 name=$1
 # Secund parameter image name avaible on "https://get.goffinet.org/kvm/"
-#imagename="centos7 ubuntu1804 debian9"
+#imagename="centos7 bionic debian10"
 which curl > /dev/null || ( echo "Please install curl" && exit )
-imagename="$(curl -qs https://get.goffinet.org/kvm/imagename)"
+imagename="$(curl -kqs https://get.goffinet.org/kvm/imagename)"
 image="$2.qcow2"
 # Generate an unique string
 uuid=$(uuidgen -t)
@@ -28,20 +28,30 @@ size="8"
 # Hypervisor can be 'qemu', 'kvm' or 'xen'
 hypervisor="kvm"
 # RAM in Mb
-memory="512"
+memory="1024"
 # Graphics 'none' or 'vnc'
 graphics="none"
 # Network interface and model 'virtio' or 'rtl8139' or 'e1000'
 interface="virbr0"
 model="virtio"
-if [ $image = "ubuntu1804.qcow2" ]; then
-os="ubuntu17.10"
+# osinfo-query os
+if [ $image = "bionic.qcow2" ]; then
+os="ubuntu18.04"
 fi
-if [ $image = "debian9.qcow2" ]; then
+if [ $image = "debian10.qcow2" ]; then
 os="debian9"
 fi
 if [ $image = "centos7.qcow2" ]; then
 os="centos7.0"
+fi
+if [ $image = "focal.qcow2" ]; then
+os="ubuntu18.04"
+fi
+if [ $image = "centos8.qcow2" ]; then
+os="centos7.0"
+fi
+if [ $image = "fedora32.qcow2" ]; then
+os="fedora28"
 fi
 # Parameters for metasploitable guests
 if [ $image = "metasploitable.qcow2" ]; then
@@ -93,11 +103,11 @@ fi
 qemu-img create -f qcow2 -b /var/lib/libvirt/images/$image /var/lib/libvirt/images/$disk
 
 ## Customize this new guest disk
-if [ $image = "ubuntu1804.qcow2" ]; then
+if [ $image = "bionic.qcow2" ]; then
 sleep 1
 virt-sysprep -a /var/lib/libvirt/images/$disk --operations customize --firstboot-command "sudo dbus-uuidgen > /etc/machine-id ; sudo hostnamectl set-hostname $name ; sudo reboot"
 fi
-if [ $image = "debian9.qcow2" ]; then
+if [ $image = "debian10.qcow2" ]; then
 sleep 1
 virt-sysprep -a /var/lib/libvirt/images/$disk --operations customize --firstboot-command "sudo dbus-uuidgen > /etc/machine-id ; sudo hostnamectl set-hostname $name ; sudo reboot"
 fi
@@ -110,7 +120,7 @@ fi
 virt-install \
 --virt-type $hypervisor \
 --name=$name \
---disk path=/var/lib/libvirt/images/$disk,size=$size,format=qcow2,bus=$diskbus \
+--disk path=/var/lib/libvirt/images/$disk \
 --ram=$memory \
 --vcpus=$vcpu \
 --os-type=linux \

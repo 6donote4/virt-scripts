@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#imagename="debian7 debian8 debian9 centos7 centos7.5 ubuntu1604 ubuntu1804 metasploitable kali arch"
+#imagename="debian7 debian8 debian10 centos7 centos8 ubuntu1604 bionic metasploitable kali arch"
 which curl > /dev/null || ( echo "Please install curl" && exit )
-imagename="$(curl -qs https://get.goffinet.org/kvm/imagename)"
+imagename="$(curl -kqs https://get.goffinet.org/kvm/imagename)"
 image=$4
 # Generate an unique string
 uuid=$(uuidgen -t)
@@ -14,7 +14,25 @@ network=$2
 # Profiles : xsmall, small, medium, big (and  desktop)
 profile=$3
 parameters=$#
-
+# osinfo-query os
+if [ $image = "bionic.qcow2" ]; then
+os="ubuntu18.04"
+fi
+if [ $image = "debian10.qcow2" ]; then
+os="debian9"
+fi
+if [ $image = "centos7.qcow2" ]; then
+os="centos7.0"
+fi
+if [ $image = "focal.qcow2" ]; then
+os="ubuntu18.04"
+fi
+if [ $image = "centos8.qcow2" ]; then
+os="centos7.0"
+fi
+if [ $image = "fedora32.qcow2" ]; then
+os="fedora28"
+fi
 
 usage_message () {
 ## Usage message
@@ -79,11 +97,15 @@ qemu-img create -f qcow2 -b /var/lib/libvirt/images/${image}.qcow2 /var/lib/libv
 
 customize_new_disk () {
 ## Customize this new guest disk
-if [ $image = "ubuntu1804" ]; then
+if [ $image = "bionic" ]; then
 sleep 1
 virt-sysprep -a /var/lib/libvirt/images/$disk --operations customize --firstboot-command "sudo dbus-uuidgen > /etc/machine-id ; sudo hostnamectl set-hostname $name ; sudo reboot"
 fi
-if [ $image = "debian9" ]; then
+if [ $image = "focal" ]; then
+sleep 1
+virt-sysprep -a /var/lib/libvirt/images/$disk --operations customize --firstboot-command "sudo dbus-uuidgen > /etc/machine-id ; sudo hostnamectl set-hostname $name ; sudo reboot"
+fi
+if [ $image = "debian10" ]; then
 sleep 1
 virt-sysprep -a /var/lib/libvirt/images/$disk --operations customize --firstboot-command "sudo dbus-uuidgen > /etc/machine-id ; sudo hostnamectl set-hostname $name ; sudo reboot"
 fi
@@ -101,6 +123,7 @@ virt-install \
 --ram=$memory \
 --vcpus=$vcpu \
 --os-type=linux \
+--os-variant=$os \
 --network network=$network,model=$model \
 --graphics $graphics \
 --console pty,target_type=serial \
